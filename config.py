@@ -1,4 +1,4 @@
-
+import redis
 
 class Config(object):
     '''配置信息'''
@@ -26,6 +26,6 @@ class ProductionConfig(Config):
     pass
 
 config_map = {
-    'develop': DevelopmentConfig,
-    'product': ProductionConfig
+    "develop": DevelopmentConfig,
+    "product": ProductionConfig
 }
