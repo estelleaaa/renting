@@ -173,4 +173,59 @@ class House(BaseModel, db.Model):
             comments.append(comment)
         house_dict['comments'] = comments
         return house_dict
-    
+
+class Facility(BaseModel, db.Model):
+    '''设施信息'''
+    __tablename__ = 'renting_facility_info'
+
+    id = db.Column(db.Integer, primary_key=True) # 设施编号
+    name = db.Column(db.String(32), nullable=False) # 设施名字
+
+class HouseImage(BaseModel, db.Model):
+    '''房屋图片'''
+    __tablename__ = 'renting_house_image'
+
+    id = db.Column(db.Integer, primary_key=True)
+    house_id = db.Column(db.Integer, db.ForeignKey('renting_house_info.id'), nullable=False) # 房屋编号
+    url = db.Column(db.String(256), nullable=False) # 图片的路径
+
+class Order(BaseModel, db.Model):
+    '''订单'''
+    __tablename__ = 'renting_order_info'
+
+    id = db.Column(db.Integer, primary_key=True) # 订单编号
+    user_id = db.Column(db.Integer, db.ForeignKey('renting_user_profile.id'), nullable=False) # 下订单的用户编号
+    house_id = db.Column(db.Integer, db.ForeignKey('renting_house_info.id'), nullable=False) # 预定的房间编号
+    begin_date = db.Column(db.DateTime, nullable=False) # 预订的起始时间
+    end_time = db.Column(db.DateTime, nullable=False) # 预订的结束时间
+    days = db.Column(db.Integer, nullable=False) # 预订的总天数
+    house_price = db.Column(db.Integer, nullable=False) # 房屋的单价
+    status = db.Column(#订单状态
+        db.Enum( # 枚举 
+            'WAIT_ACCEPT', # 待接单
+            'WAIT_PAYMENT', # 待支付
+            'PAID', # 已付款
+            'WAIT_COMMENT', #待评价
+            'COMPLETE', # 已完成
+            'CANCELED', # 已取消
+            'REJECTED' # 已拒单
+        ),
+        default='WAIT_ACCEPT', index=True)    # 指明在mysql中这个字段建立索引 加快查询速度
+    comment = db.Column(db.Text) # 订单的评论信息或者拒单原因
+    trade_no = db.Column(db.String(80)) # 订单交易流水号 支付宝的
+
+    def to_dict(self):
+        '''将订单信息转换为字典数据'''
+        order_dict = {
+            'order_id':self.id,
+            'title':self.house.title,
+            'img_url': constants.QINIU_URL_DOMAIN + self.house.index_image_url if self.house.index_imgae_url else "",
+            'start_date': self.begin_date.strftime("%Y-%m-%d"),
+            'end_date':self.end_date.strftime("%Y-%m-%d"),
+            'ctime': self.create_time.strftime("%Y-%m-%d %H:%M:%S"),
+            'days':self.days,
+            'amount':self.amount,
+            'status':self.status,
+            'comment':self.comment if self.comment else ""
+        }            
+        return order_dict
